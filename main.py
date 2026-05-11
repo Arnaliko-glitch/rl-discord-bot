@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
+TRACKER_API = os.getenv("TRACKER_API")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -37,8 +38,10 @@ async def rank(interaction: discord.Interaction, player: str):
     url = f"https://api.tracker.gg/api/v2/rocket-league/standard/profile/epic/{player}"
 
     headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "application/json",
+    "TRN-Api-Key": TRACKER_API
+}
 
     r = requests.get(url, headers=headers)
 
