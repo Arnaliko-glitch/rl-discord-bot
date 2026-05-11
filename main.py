@@ -34,10 +34,10 @@ async def on_ready():
 @bot.tree.command(name="rank", description="Voir le rank RL")
 async def rank(interaction: discord.Interaction, player: str):
 
-    await interaction.response.defer()
+    await interaction.response.defer(thinking=True)
 
     try:
-        url = f"https://api.tracker.gg/api/v2/rocket-league/standard/profile/epic/{player}"
+        url = f"https://api.tracker.gg/api/v2/rocket-league/standard/profile/epic/platform:epic:{player}"
 
         headers = {
             "User-Agent": "Mozilla/5.0",
@@ -45,10 +45,7 @@ async def rank(interaction: discord.Interaction, player: str):
             "TRN-Api-Key": TRACKER_API
         }
 
-        r = requests.get(url, headers=headers, timeout=10)
-
-        print(r.status_code)
-        print(r.text)
+        r = requests.get(url, headers=headers, timeout=5)
 
         if r.status_code != 200:
             await interaction.followup.send("❌ Joueur introuvable.")
@@ -67,7 +64,7 @@ async def rank(interaction: discord.Interaction, player: str):
 
                 msg += f"🏆 {name}\n{tier} {division}\n\n"
 
-        if msg == "":
+        if not msg:
             msg = "Aucun rank trouvé."
 
         embed = discord.Embed(
@@ -79,7 +76,7 @@ async def rank(interaction: discord.Interaction, player: str):
         await interaction.followup.send(embed=embed)
 
     except Exception as e:
-        await interaction.followup.send(f"❌ Erreur API : {str(e)}")
+        await interaction.followup.send(f"❌ Erreur API : {e}")
 
 # ================== /SHOP ==================
 @bot.tree.command(name="shop", description="Boutique RL")
