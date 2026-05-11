@@ -86,4 +86,18 @@ async def shop(interaction: discord.Interaction):
 
     await interaction.response.send_message(embed=embed)
 
+from threading import Thread
+from flask import Flask
+
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is alive"
+
+def run():
+    app.run(host="0.0.0.0", port=10000)
+
+Thread(target=run).start()
+
 bot.run(TOKEN)
