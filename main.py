@@ -36,46 +36,47 @@ async def rank(interaction: discord.Interaction, player: str):
 
     await interaction.response.defer()
 
-    url = f"https://api.tracker.gg/api/v2/rocket-league/standard/profile/epic/{player}"
+    try:
+        url = f"https://api.tracker.gg/api/v2/rocket-league/standard/profile/epic/{player}"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/json",
-        "TRN-Api-Key": TRACKER_API
-    }
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json",
+            "TRN-Api-Key": TRACKER_API
+        }
 
-    r = requests.get(url, headers=headers, timeout=10)
+        r = requests.get(url, headers=headers, timeout=10)
 
-    print(r.status_code)
-    print(r.text)
+        print(r.status_code)
+        print(r.text)
 
-    if r.status_code != 200:
-        await interaction.followup.send("❌ Joueur introuvable.")
-        return
+        if r.status_code != 200:
+            await interaction.followup.send("❌ Joueur introuvable.")
+            return
 
-    data = r.json()
-    segments = data["data"]["segments"]
+        data = r.json()
+        segments = data["data"]["segments"]
 
-    msg = ""
+        msg = ""
 
-    for s in segments:
-        if s["type"] == "playlist":
-            name = s["metadata"]["name"]
-            tier = s["stats"]["tier"]["metadata"]["name"]
-            division = s["stats"]["division"]["metadata"]["name"]
+        for s in segments:
+            if s["type"] == "playlist":
+                name = s["metadata"]["name"]
+                tier = s["stats"]["tier"]["metadata"]["name"]
+                division = s["stats"]["division"]["metadata"]["name"]
 
-            msg += f"🏆 {name}\n{tier} {division}\n\n"
+                msg += f"🏆 {name}\n{tier} {division}\n\n"
 
-    if msg == "":
-        msg = "Aucun rank trouvé."
+        if msg == "":
+            msg = "Aucun rank trouvé."
 
-    embed = discord.Embed(
-        title=f"Rank de {player}",
-        description=msg,
-        color=0x00b0f4
-    )
+        embed = discord.Embed(
+            title=f"Rank de {player}",
+            description=msg,
+            color=0x00b0f4
+        )
 
-    await interaction.followup.send(embed=embed)
+        await interaction.followup.send(embed=embed)
 
     except Exception as e:
         await interaction.followup.send(f"❌ Erreur API : {str(e)}")
