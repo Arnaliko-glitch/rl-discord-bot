@@ -1,24 +1,25 @@
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord import app_commands
 import requests
 import os
 from dotenv import load_dotenv
+from threading import Thread
+from flask import Flask
 
+# ================== ENV ==================
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 TRACKER_API = os.getenv("TRACKER_API")
 
+# ================== INTENTS ==================
 intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-SHOP_CHANNEL_ID = 0  # Mets ton salon ici après
-
-# ========= READY =========
-
+# ================== READY ==================
 @bot.event
 async def on_ready():
     print(f"Connecté : {bot.user}")
@@ -29,74 +30,71 @@ async def on_ready():
     except Exception as e:
         print(e)
 
-# ========= RANK =========
-
+# ================== /RANK ==================
 @bot.tree.command(name="rank", description="Voir le rank RL")
 @app_commands.describe(player="Pseudo Epic")
 async def rank(interaction: discord.Interaction, player: str):
 
+    await interaction.response.defer()  # IMPORTANT (évite crash)
+
     url = f"https://api.tracker.gg/api/v2/rocket-league/standard/profile/epic/{player}"
 
     headers = {
-    "User-Agent": "Mozilla/5.0",
-    "Accept": "application/json",
-    "TRN-Api-Key": TRACKER_API
-}
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/json",
+        "TRN-Api-Key": TRACKER_API
+    }
 
-    r = requests.get(url, headers=headers)
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
 
-    r = requests.get(url, headers=headers)
+        if r.status_code != 200:
+            await interaction.followup.send("❌ Joueur introuvable.")
+            return
 
-    print(r.status_code)
-    print(r.text)
-    
-    if r.status_code != 200:
-        await interaction.response.send_message("Joueur introuvable.")
-        return
+        data = r.json()
+        segments = data["data"]["segments"]
 
-    data = r.json()
+        msg = ""
 
-    segments = data["data"]["segments"]
+        for s in segments:
+            if s["type"] == "playlist":
+                name = s["metadata"]["name"]
+                tier = s["stats"]["tier"]["metadata"]["name"]
+                division = s["stats"]["division"]["metadata"]["name"]
 
-    msg = ""
+                msg += f"🏆 {name}\n{tier} {division}\n\n"
 
-    for s in segments:
-        if s["type"] == "playlist":
-            name = s["metadata"]["name"]
-            tier = s["stats"]["tier"]["metadata"]["name"]
-            division = s["stats"]["division"]["metadata"]["name"]
+        if msg == "":
+            msg = "Aucun rank trouvé."
 
-            msg += f"🏆 {name}\n{tier} {division}\n\n"
+        embed = discord.Embed(
+            title=f"Rank de {player}",
+            description=msg,
+            color=0x00b0f4
+        )
 
-    embed = discord.Embed(
-        title=f"Rank de {player}",
-        description=msg,
-        color=0x00b0f4
-    )
+        await interaction.followup.send(embed=embed)
 
-    await interaction.response.send_message(embed=embed)
+    except Exception as e:
+        await interaction.followup.send(f"❌ Erreur API : {str(e)}")
 
-# ========= SHOP =========
-
+# ================== /SHOP ==================
 @bot.tree.command(name="shop", description="Boutique RL")
 async def shop(interaction: discord.Interaction):
 
-    url = "https://rl.insider.gg/fr/pc"
-
     embed = discord.Embed(
         title="Boutique Rocket League",
-        description=f"Voir la boutique ici : {url}",
+        description="https://rl.insider.gg/fr/pc",
         color=0xff9900
     )
 
     await interaction.response.send_message(embed=embed)
 
-from threading import Thread
-from flask import Flask
+# ================== FLASK (Render fix) ==================
+app = Flask("")
 
-app = Flask('')
-
-@app.route('/')
+@app.route("/")
 def home():
     return "Bot is alive"
 
@@ -105,4 +103,5 @@ def run():
 
 Thread(target=run).start()
 
+# ================== START BOT ==================
 bot.run(TOKEN)
