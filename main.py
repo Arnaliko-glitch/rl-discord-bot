@@ -45,9 +45,11 @@ async def rank(interaction: discord.Interaction, player: str):
 
     r = requests.get(url, headers=headers)
 
-    print(r.status_code)
-print(r.text)
+    r = requests.get(url, headers=headers)
 
+    print(r.status_code)
+    print(r.text)
+    
     if r.status_code != 200:
         await interaction.response.send_message("Joueur introuvable.")
         return
