@@ -57,7 +57,7 @@ async def rank(interaction: discord.Interaction, player: str):
     try:
         await interaction.response.defer(thinking=True)
 
-        url = f"https://api.tracker.gg/api/v2/rocket-league/standard/profile/epic/platform:epic:{player}"
+        url = f"https://api.tracker.gg/api/v2/rocket-league/standard/profile/epic/{player}"
 
         headers = {
             "User-Agent": "Mozilla/5.0",
